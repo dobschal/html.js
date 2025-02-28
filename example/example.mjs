@@ -15,20 +15,10 @@ const username = Observable("Steve");
 const description = Observable("This is a description");
 const createdAt = Observable(new Date());
 
+const isUsernameValid = Computed(() => username.value.length > 0);
+
 function removeUser(user) {
     users.value = users.value.filter(u => u !== user);
-}
-
-function Button(...args) {
-    let onclick, text, ifCondition;
-    if (args.length === 2) {
-        [text, onclick] = args;
-        ifCondition = true;
-    } else if (args.length === 3) {
-        [text, ifCondition, onclick] = args;
-    }
-    return html`
-        <button if="${ifCondition}" onclick="${onclick}">${text}</button>`;
 }
 
 function addUser() {
@@ -36,9 +26,10 @@ function addUser() {
     username.value = "";
 }
 
-const isUsernameValid = Computed(() => username.value.length > 0);
-
-// TODO: define components to apply attributes on them and pass data into them
+function Button(text, onclick) {
+    return html`
+        <button onclick="${onclick}">${text}</button>`;
+}
 
 const element = html`
     <main>
@@ -67,7 +58,7 @@ const element = html`
         <h2>Render list of HTML elements dynamically based on observable array</h2>
         <p>
         <ul>
-            ${users.map((user, i) => i === 0 ? "Hey" : html`
+            ${users.map(user => html`
                 <li onclick="${() => removeUser(user)}">${user.name}</li>
             `)}
         </ul>
@@ -75,8 +66,10 @@ const element = html`
                 type="text"
                 placeholder="Enter the users name..."
                 value="${username}">
-        ${Button(() => `Add ${username.value}`, isUsernameValid, addUser)}
-        <span if-not="${isUsernameValid}">Enter a name to add a user</span>
+        <span if="${isUsernameValid}">
+            ${Button(() => `Add ${username.value}`, addUser)}
+        </span>
+        <span else>Enter a name to add a user</span>
         </p>
 
         <h2>Use if/else attribute to show or hide elements</h2>

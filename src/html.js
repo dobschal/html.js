@@ -119,22 +119,23 @@ function handleClassList(node, arg, placeholder) {
 
 function handleIfAttribute(node, attributeKey, arg) {
 
-    node.removeAttribute(attributeKey);
-
+    const nextSiblingHasElseAttribute = node.nextElementSibling?.getAttributeNames().includes("else");
     const placeholderNode = document.createComment(" ❤️ ");
     const nextSibling = node.nextElementSibling;
     const siblingPlaceholder = document.createComment(" ❤️ ");
+    
+    node.removeAttribute(attributeKey);
 
     function update(value) {
         if (attributeKey === "if-not") value = !value;
         if (!value) {
             node.replaceWith(placeholderNode);
-            if (nextSibling?.getAttributeNames().includes("else")) {
+            if (nextSiblingHasElseAttribute) {
                 siblingPlaceholder.replaceWith(nextSibling);
             }
         } else {
             placeholderNode.replaceWith(node);
-            if (nextSibling?.getAttributeNames().includes("else")) {
+            if (nextSiblingHasElseAttribute) {
                 nextSibling.replaceWith(siblingPlaceholder);
             }
         }

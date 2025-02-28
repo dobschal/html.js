@@ -1,4 +1,5 @@
 const html = require("./html");
+const {Observable, Computed} = require("@dobschal/observable");
 
 test("Creates HTMLElement", () => {
     const element = html`
@@ -26,4 +27,82 @@ test("Replaces placeholder with HTMLElement", () => {
     expect(htmlElements[1]).toBe(element);
 });
 
-// TODO: More tests
+test("Replaces placeholder with string", () => {
+    const element = html`
+        <div>
+            <span>${"Hello World"}</span>
+        </div>
+    `;
+    expect(element.querySelector("span").textContent).toBe("Hello World");
+});
+
+test("Replaces placeholder with observable", () => {
+    const observable = Observable("Hello World");
+    const element = html`
+        <div>
+            <span>${observable}</span>
+        </div>
+    `;
+    expect(element.querySelector("span").textContent).toBe("Hello World");
+});
+
+test("Replaces placeholder with observable and updates", () => {
+    const observable = Observable("Hello World");
+    const element = html`
+        <div>
+            <span>${observable}</span>
+        </div>
+    `;
+    observable.value = "Hello Universe";
+    expect(element.querySelector("span").textContent).toBe("Hello Universe");
+});
+
+test("Replaces placeholder with computed value", () => {
+    const observable = Observable("Hello");
+    const computed = Computed(() => observable.value + " World");
+    const element = html`
+        <div>
+            <span>${computed}</span>
+        </div>
+    `;
+    expect(element.querySelector("span").textContent).toBe("Hello World");
+});
+
+test("Replaces placeholder with computed value and updates", () => {
+    const observable = Observable("Hello");
+    const computed = Computed(() => observable.value + " World");
+    const element = html`
+        <div>
+            <span>${computed}</span>
+        </div>
+    `;
+    observable.value = "Hello Universe";
+    expect(element.querySelector("span").textContent).toBe("Hello Universe World");
+});
+
+test("Applies event listener to element", () => {
+    const observable = Observable(0);
+    const element = html`
+        <button onclick="${() => observable.value++}"></button>
+    `;
+    element.click();
+    expect(observable.value).toBe(1);
+});
+
+test("Binds observable value to input element", () => {
+    const observable = Observable("Hello World");
+    const element = html`
+        <input type="text" value="${observable}">
+    `;
+    expect(element.value).toBe("Hello World");
+});
+
+test("Binds input element value to observable", () => {
+    const observable = Observable("Hello World");
+    const element = html`
+        <input type="text" value="${observable}">
+    `;
+    element.value = "Hello Universe";
+    element.dispatchEvent(new Event("input"));
+    expect(observable.value).toBe("Hello Universe");
+});
