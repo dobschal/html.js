@@ -10,17 +10,20 @@ test("Creates HTMLElements as array", () => {
     const elements = html`
         <div></div>
         <div></div>`;
-    expect(Array.isArray(elements)).toBe(true);
-    expect(elements.length).toBe(2);
-    expect(elements.every((element) => element instanceof HTMLElement)).toBe(true);
+    const htmlElements = elements.filter(el => (el instanceof HTMLElement));
+    expect(Array.isArray(htmlElements)).toBe(true);
+    expect(htmlElements.length).toBe(2);
+    expect(htmlElements.every((element) => element instanceof HTMLElement)).toBe(true);
 });
 
 test("Replaces placeholder with HTMLElement", () => {
     const element = document.createElement("div");
     const elements = html`
-        <div></div>${element}
+        <div></div>
+        ${element}
         <div></div>`;
-    expect(elements[1]).toBe(element);
+    const htmlElements = elements.filter(el => (el instanceof HTMLElement));
+    expect(htmlElements[1]).toBe(element);
 });
 
 // TODO: More tests

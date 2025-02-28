@@ -1,5 +1,5 @@
 {
-  "name": "@dobschal/html",
+  "name": "@dobschal/html.js",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,14 @@
     "vite-plugin-commonjs": "^0.10.4",
     "jest-environment-jsdom": "^29.7.0"
   },
-  "keywords": ["MVVM", "HTML", "DOM", "Binding", "Data Binding", "Reactive Programming"],
+  "keywords": [
+    "MVVM",
+    "HTML",
+    "DOM",
+    "Binding",
+    "Data Binding",
+    "Reactive Programming"
+  ],
   "author": "Sascha Dobschal <sascha@dobschal.eu",
   "license": "WTFPL",
   "description": "Library to create HTML elements with JavaScript that support MVVM binding.",
