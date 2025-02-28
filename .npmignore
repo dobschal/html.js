@@ -1,0 +1,6 @@
+*.test.js
+.idea
+.github
+example/
+vite.config.mjs
+index.html
