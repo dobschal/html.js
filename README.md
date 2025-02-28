@@ -45,3 +45,97 @@ document.body.append(view);
 
 ```
 
+## API
+
+### html
+
+`html` is a tagged template literal function that creates an HTML element from a template string.
+
+```javascript
+// Create a div element with the text "Hello World"
+const element = html`<div>Hello World</div>`;
+console.log(element instanceof HTMLElement); // true
+```
+
+### Components
+
+You can create components by defining a function that returns an HTML element.
+
+```javascript
+function MyComponent() {
+    return html`<div>Hello World</div>`;
+}
+
+function App() {
+    return html`
+        <div>
+            ${MyComponent()}
+        </div>
+    `;
+}
+
+document.body.append(App());
+```
+
+### Event Listeners
+
+You can add event listeners to elements by using the standard HTML event attributes.
+
+```javascript
+html`
+    <button onclick="${() => console.log('Clicked')}">Click Me</button>
+`;
+```
+
+### Model View Binding
+
+You can bind an observable to an element by using the observable directly in the template.
+
+```javascript
+import {Observable} from '@dobschal/observable';
+
+const count = Observable(0);
+
+const view = html`
+    <p>👉 ${count}</p>
+    <button onclick="${() => count.value++}">Count Up 🚀</button>
+`;
+```
+
+### Conditional Rendering
+
+You can conditionally render elements by using the ternary operator or the custom `if` attribute.
+
+```javascript
+const show = Observable(true);
+
+// With the ternary operator
+const view = html`
+    ${show ? html`<div>Hello World</div>` : null}
+`;
+
+// With the if attribute
+const view = html`
+    <div if="${show}">Hello World</div>
+`;
+```
+
+### List Rendering
+
+You can render lists by using the `map` function on an array or observable array.
+
+```javascript
+const items = Observable([1, 2, 3]);
+
+const view = html`
+    <ul>
+        ${items.map(item => html`<li>${item}</li>`)}
+    </ul>
+`;
+```
+
+# Author
+
+![👋](https://avatars.githubusercontent.com/u/15888400?s=48&v=4)
+
+Sascha Dobschal

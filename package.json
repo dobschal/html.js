@@ -1,6 +1,6 @@
 {
   "name": "@dobschal/html.js",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
@@ -26,7 +26,7 @@
   "license": "WTFPL",
   "description": "Library to create HTML elements with JavaScript that support MVVM binding.",
   "dependencies": {
-    "@dobschal/observable": "^1.0.3"
+    "@dobschal/observable": "^1.0.4"
   },
   "repository": {
     "type": "git",

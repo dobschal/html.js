@@ -106,3 +106,54 @@ test("Binds input element value to observable", () => {
     element.dispatchEvent(new Event("input"));
     expect(observable.value).toBe("Hello Universe");
 });
+
+test("Binds input element value to observable and updates", () => {
+    const observable = Observable("Hello World");
+    const element = html`
+        <input type="text" value="${observable}">
+    `;
+    observable.value = "Hello Universe";
+    expect(element.value).toBe("Hello Universe");
+});
+
+test("Renders list of elements based on observable array", () => {
+    const users = Observable(["Maria", "Klaus", "Peter", "Samantha"]);
+    const element = html`
+        <ul>
+            ${users.map(value => html`
+                <li>${value}</li>
+            `)}
+        </ul>
+    `;
+    expect(element.querySelectorAll("li").length).toBe(4);
+    expect(element.querySelectorAll("li")[0].textContent).toBe("Maria");
+    expect(element.querySelectorAll("li")[1].textContent).toBe("Klaus");
+});
+
+test("Renders list of elements based on observable array and updates", () => {
+    const users = Observable(["Maria", "Klaus", "Peter", "Samantha"]);
+    const element = html`
+        <ul>
+            ${users.map(value => html`
+                <li>${value}</li>
+            `)}
+        </ul>
+    `;
+    users.value.push("Steve");
+    expect(element.querySelectorAll("li").length).toBe(5);
+    expect(element.querySelectorAll("li")[4].textContent).toBe("Steve");
+});
+
+test("Renders list of elements based on observable array and removes item", () => {
+    const users = Observable(["Maria", "Klaus", "Peter", "Samantha"]);
+    const element = html`
+        <ul>
+            ${users.map(value => html`
+                <li>${value}</li>
+            `)}
+        </ul>
+    `;
+    users.value = ["Maria", "Klaus", "Peter"];
+    expect(element.querySelectorAll("li").length).toBe(3);
+    expect(element.querySelectorAll("li")[2].textContent).toBe("Peter");
+});

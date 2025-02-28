@@ -121,9 +121,20 @@ function handleIfAttribute(node, attributeKey, arg) {
 
     const nextSiblingHasElseAttribute = node.nextElementSibling?.getAttributeNames().includes("else");
     const placeholderNode = document.createComment(" ❤️ ");
-    const nextSibling = node.nextElementSibling;
+    let nextSibling = node.nextElementSibling;
     const siblingPlaceholder = document.createComment(" ❤️ ");
-    
+
+    if (node.tagName === "HOLD-PASS") {
+        const child = node.firstElementChild;
+        node.replaceWith(child);
+        node = child;
+    }
+    if (nextSiblingHasElseAttribute && nextSibling.tagName === "HOLD-PASS") {
+        const child = nextSibling.firstElementChild;
+        nextSibling.replaceWith(child);
+        nextSibling = child;
+    }
+
     node.removeAttribute(attributeKey);
 
     function update(value) {
@@ -258,11 +269,18 @@ function html(templateParts, ...args) {
                 throw new Error("Fatal: Could not find placeholder for argument: " + i);
             }
 
-            replaceAttributePlaceholder(node, attributeKey, arg, makePlaceholderId(i, instanceId));
+            if (node.tagName === "HOLD-PASS") {
+                setTimeout(() => replaceAttributePlaceholder(node, attributeKey, arg, makePlaceholderId(i, instanceId)));
+            } else {
+                replaceAttributePlaceholder(node, attributeKey, arg, makePlaceholderId(i, instanceId));
+            }
         }
     });
 
     return fakeParent.childNodes.length > 1 ? Array.from(fakeParent.childNodes) : fakeParent.firstChild;
 }
+
+customElements.define("hold-pass", class extends HTMLElement {
+});
 
 module.exports = html;

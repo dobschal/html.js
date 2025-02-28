@@ -66,9 +66,9 @@ const element = html`
                 type="text"
                 placeholder="Enter the users name..."
                 value="${username}">
-        <span if="${isUsernameValid}">
+        <hold-pass if="${isUsernameValid}">
             ${Button(() => `Add ${username.value}`, addUser)}
-        </span>
+        </hold-pass>
         <span else>Enter a name to add a user</span>
         </p>
 
