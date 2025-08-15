@@ -1,1 +1,1 @@
-export default function html(strings: TemplateStringsArray, ...values: any[]): Array<ChildNode>;
+export default function html(strings: TemplateStringsArray, ...values: any[]): Array<ChildNode> | ChildNode;

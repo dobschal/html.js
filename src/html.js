@@ -331,7 +331,7 @@ function html(templateParts, ...args) {
         }
     });
 
-    return Array.from(fakeParent.childNodes);
+    return fakeParent.childNodes.length > 1 ? Array.from(fakeParent.childNodes) : fakeParent.firstChild;
 }
 
 customElements.define("hold-pass", class extends HTMLElement {
