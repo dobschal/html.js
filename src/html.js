@@ -93,6 +93,20 @@ function findNodeByAttributeValue(fakeParent, placeholder) {
     return [];
 }
 
+function findNodeByAttributeKey(fakeParent, attributeKey) {
+    const elementWalker = document.createTreeWalker(
+        fakeParent,
+        NodeFilter.SHOW_ELEMENT,
+    );
+    while (elementWalker.nextNode()) {
+        const node = elementWalker.currentNode;
+        if (node.getAttributeNames().includes(attributeKey)) {
+            return node;
+        }
+    }
+    return undefined;
+}
+
 function handleClassList(node, arg, placeholder) {
     if (arg?.isObservable) {
         let currentClass = placeholder;
@@ -115,6 +129,35 @@ function handleClassList(node, arg, placeholder) {
     }
     node.classList.add(arg);
     node.classList.remove(placeholder);
+}
+
+function handleAttributeWithoutValue(node, arg, placeholder) {
+
+    function update(value) {
+        // Let's use the placeholder attribute to store the value
+        // so we can remove it later and set the new value
+        const lastValue = node.getAttribute(placeholder);
+        if (lastValue && node.hasAttribute(lastValue)) {
+            node.removeAttribute(lastValue);
+        }
+        node.setAttribute(placeholder, value);
+        if(value) {
+            node.setAttribute(value, "");
+        }
+    }
+
+    if (arg?.isObservable) {
+        arg.subscribe((value) => update(value));
+        return;
+    }
+
+    if (typeof arg === "function") {
+        const computed = Computed(arg);
+        computed.subscribe((value) => update(value));
+        return;
+    }
+
+    update(arg);
 }
 
 function handleIfAttribute(node, attributeKey, arg) {
@@ -167,6 +210,11 @@ function handleIfAttribute(node, attributeKey, arg) {
 }
 
 function replaceAttributePlaceholder(node, attributeKey, arg, placeholder) {
+
+    if(!attributeKey) {
+        handleAttributeWithoutValue(node, arg, placeholder);
+        return;
+    }
 
     if (attributeKey === "if") {
         handleIfAttribute(node, attributeKey, arg);
@@ -264,20 +312,26 @@ function html(templateParts, ...args) {
             }
             replacePlaceholderNode(placeholderNode, arg);
         } else {
-            const [node, attributeKey] = findNodeByAttributeValue(fakeParent, makePlaceholderId(i, instanceId));
+            let [node, attributeKey] = findNodeByAttributeValue(fakeParent, makePlaceholderId(i, instanceId));
+
+            // Sometimes the attribute key itself is dynamic --> so we need to find the node by the attribute key
+
             if (!node) {
-                throw new Error("Fatal: Could not find placeholder for argument: " + i);
+                node = findNodeByAttributeKey(fakeParent, makePlaceholderId(i, instanceId));
+                if (!node) {
+                    throw new Error("Fatal: Could not find placeholder for argument: " + i);
+                }
             }
 
             if (node.tagName === "HOLD-PASS") {
                 setTimeout(() => replaceAttributePlaceholder(node, attributeKey, arg, makePlaceholderId(i, instanceId)));
-            } else {
+            }  else {
                 replaceAttributePlaceholder(node, attributeKey, arg, makePlaceholderId(i, instanceId));
             }
         }
     });
 
-    return fakeParent.childNodes.length > 1 ? Array.from(fakeParent.childNodes) : fakeParent.firstChild;
+    return Array.from(fakeParent.childNodes);
 }
 
 customElements.define("hold-pass", class extends HTMLElement {

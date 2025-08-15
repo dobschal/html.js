@@ -22,7 +22,7 @@ The example below creates a simple div element with the text "Hello World" and a
 import {html} from '@dobschal/html.js';
 
 document.body.append(
-    html`<div>Hello World</div>`
+    ...html`<div>Hello World</div>`
 );
 ```
 
@@ -41,7 +41,7 @@ const view = html`
     <button onclick="${() => count.value++}">Count Up 🚀</button>
 `;
 
-document.body.append(view);
+document.body.append(...view);
 
 ```
 
@@ -49,12 +49,18 @@ document.body.append(view);
 
 ### html
 
-`html` is a tagged template literal function that creates an HTML element from a template string.
+`html` is a tagged template literal function that creates an HTML elements from a template string.
 
 ```javascript
 // Create a div element with the text "Hello World"
 const element = html`<div>Hello World</div>`;
-console.log(element instanceof HTMLElement); // true
+console.log(element[0] instanceof HTMLElement); // true
+```
+
+In case the HTML template contains multiple elements, an array of elements is returned!
+When appending to the DOM, you can use the spread operator to append all elements at once.
+```javascript
+document.body.append(...html`<div>Hello World</div>`);
 ```
 
 ### Components
@@ -74,7 +80,7 @@ function App() {
     `;
 }
 
-document.body.append(App());
+document.body.append(...App());
 ```
 
 ### Event Listeners

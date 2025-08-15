@@ -1,6 +1,8 @@
 const html = require("./html");
 const {Observable, Computed} = require("@dobschal/observable");
 
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 test("Creates HTMLElement", () => {
     const element = html`
         <div></div>`;
@@ -156,4 +158,30 @@ test("Renders list of elements based on observable array and removes item", () =
     users.value = ["Maria", "Klaus", "Peter"];
     expect(element.querySelectorAll("li").length).toBe(3);
     expect(element.querySelectorAll("li")[2].textContent).toBe("Peter");
+});
+
+test("Having an attribute on the root element based on observable works", async () => {
+
+    const state = Observable({ isOpen: true});
+
+    function Component() {
+        return html`
+            <dialog ${() => state.value.isOpen ? "open" : ""}>
+                <p>Example</p>
+            </dialog>
+        `;
+    }
+
+    const elements = html`
+        <div>
+            <h1>Yeah</h1>
+        </div>
+        <div>
+            <h2>Uuuuh</h2>
+        </div>
+        ${Component()}
+    `;
+    expect(elements.at(-1).hasAttribute("open")).toBe(true); // or expect(elements.at(-1).get("open")).toBe(true);
+    state.value.isOpen = false;
+    expect(elements.at(-1).hasAttribute("open")).toBe(false);
 });
