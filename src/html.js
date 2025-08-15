@@ -127,7 +127,7 @@ function handleClassList(node, arg, placeholder) {
         });
         return;
     }
-    node.classList.add(arg);
+    if(arg) node.classList.add(arg);
     node.classList.remove(placeholder);
 }
 

@@ -197,3 +197,16 @@ test("Splicing in undefined as value should work", () => {
     `;
     expect(elements.filter(el => el instanceof HTMLElement).length).toBe(2);
 });
+
+test("Applying empty class should work", () => {
+    const elements = html`
+        <div class="${""}">
+            <h1>Yeah</h1>
+        </div>
+        <div class="${undefined}">
+            <h2>Uuuuh</h2>
+        </div>
+    `;
+    expect(elements.filter(el => el instanceof HTMLElement).at(0).classList.length).toBe(0);
+    expect(elements.filter(el => el instanceof HTMLElement).at(1).classList.length).toBe(0);
+})
