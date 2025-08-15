@@ -1,8 +1,6 @@
 const html = require("./html");
 const {Observable, Computed} = require("@dobschal/observable");
 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
 test("Creates HTMLElement", () => {
     const element = html`
         <div></div>`;
@@ -184,4 +182,18 @@ test("Having an attribute on the root element based on observable works", async 
     expect(elements.at(-1).hasAttribute("open")).toBe(true); // or expect(elements.at(-1).get("open")).toBe(true);
     state.value.isOpen = false;
     expect(elements.at(-1).hasAttribute("open")).toBe(false);
+});
+
+test("Splicing in undefined as value should work", () => {
+    const val = undefined;
+    const elements = html`
+        <div>
+            <h1>Yeah</h1>
+        </div>
+        <div>
+            <h2>Uuuuh</h2>
+        </div>
+        ${val}
+    `;
+    expect(elements.filter(el => el instanceof HTMLElement).length).toBe(2);
 });

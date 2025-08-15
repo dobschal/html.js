@@ -289,7 +289,10 @@ function html(templateParts, ...args) {
             part = part.trimEnd();
         }
         if (args[i] === undefined) {
-            return acc + part;
+            if (i === templateParts.length - 1) {
+                return acc + part;
+            }
+            args[i] = "";
         }
         const amountCloseTags = ((acc + part).match(/>/g) || []).length;
         const amountOpenTags = ((acc + part).match(/</g) || []).length;
