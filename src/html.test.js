@@ -209,4 +209,14 @@ test("Applying empty class should work", () => {
     `;
     expect(elements.filter(el => el instanceof HTMLElement).at(0).classList.length).toBe(0);
     expect(elements.filter(el => el instanceof HTMLElement).at(1).classList.length).toBe(0);
-})
+});
+
+test("Applying an attribute with value should work", () => {
+    const isShown = Observable(true);
+    const element = html`
+        <div ${() => isShown.value ? "class=\"show\"" : ""}>
+    `;
+    expect(element.classList.contains("show")).toBe(true);
+    isShown.value = false;
+    expect(element.classList.contains("show")).toBe(false);
+});

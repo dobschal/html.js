@@ -131,18 +131,21 @@ function handleClassList(node, arg, placeholder) {
     node.classList.remove(placeholder);
 }
 
-function handleAttributeWithoutValue(node, arg, placeholder) {
+// this handles the case that the whole attribute including key and value is
+// spliced in the template. Inside the placeholder attribute we store the
+// actual returned attribute key and be able to update it
+function handleDynamicAttribute(node, arg, placeholder) {
 
-    function update(value) {
-        // Let's use the placeholder attribute to store the value
-        // so we can remove it later and set the new value
-        const lastValue = node.getAttribute(placeholder);
-        if (lastValue && node.hasAttribute(lastValue)) {
-            node.removeAttribute(lastValue);
+    function update(val) {
+        let [key, value] = val.split("=", 2);
+        value = (value ?? "''").slice(1, -1);
+        const lastKey = node.getAttribute(placeholder);
+        if (lastKey && node.hasAttribute(lastKey)) {
+            node.removeAttribute(lastKey);
         }
-        node.setAttribute(placeholder, value);
-        if(value) {
-            node.setAttribute(value, "");
+        node.setAttribute(placeholder, key);
+        if(key) {
+            node.setAttribute(key, value);
         }
     }
 
@@ -211,8 +214,9 @@ function handleIfAttribute(node, attributeKey, arg) {
 
 function replaceAttributePlaceholder(node, attributeKey, arg, placeholder) {
 
+    // If no attribute key is given, the whole attribute will be replaced
     if(!attributeKey) {
-        handleAttributeWithoutValue(node, arg, placeholder);
+        handleDynamicAttribute(node, arg, placeholder);
         return;
     }
 
