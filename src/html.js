@@ -3,9 +3,9 @@ const {Computed} = require("@dobschal/observable");
 let id = 0;
 
 function convertStringToDomNodes(htmlString) {
-    const fakeParent = document.createElement("div");
+    const fakeParent = document.createElement("template");
     fakeParent.innerHTML = htmlString;
-    return Array.from(fakeParent.childNodes);
+    return Array.from(fakeParent.content.childNodes);
 }
 
 function isArrayOfSupportedValues(value) {
@@ -308,25 +308,25 @@ function html(templateParts, ...args) {
         return acc + part + `<template id="${makePlaceholderId(i, instanceId)}"></template>`;
     }, "");
 
-    const fakeParent = document.createElement("div");
+    const fakeParent = document.createElement("template");
     fakeParent.innerHTML = htmlWithPlaceholders;
 
     args.forEach((arg, i) => {
         if (htmlPlaceholderIndices.has(i)) {
-            const placeholderNode = fakeParent.querySelector("#" + makePlaceholderId(i, instanceId));
+            const placeholderNode = fakeParent.content.querySelector("#" + makePlaceholderId(i, instanceId));
             if (!placeholderNode) {
                 throw new Error("Fatal: Could not find placeholder for argument: " + i);
             }
             replacePlaceholderNode(placeholderNode, arg);
         } else {
-            let [node, attributeKey] = findNodeByAttributeValue(fakeParent, makePlaceholderId(i, instanceId));
+            let [node, attributeKey] = findNodeByAttributeValue(fakeParent.content, makePlaceholderId(i, instanceId));
 
             // Sometimes the attribute key itself is dynamic --> so we need to find the node by the attribute key
 
             if (!node) {
-                node = findNodeByAttributeKey(fakeParent, makePlaceholderId(i, instanceId));
+                node = findNodeByAttributeKey(fakeParent.content, makePlaceholderId(i, instanceId));
                 if (!node) {
-                    throw new Error("Fatal: Could not find placeholder for argument: " + i);
+                    throw new Error("Fatal: Could not find placeholder for argument: " + i + " (" + makePlaceholderId(i, instanceId) + ")");
                 }
             }
 
@@ -338,7 +338,7 @@ function html(templateParts, ...args) {
         }
     });
 
-    return fakeParent.childNodes.length > 1 ? Array.from(fakeParent.childNodes) : fakeParent.firstChild;
+    return fakeParent.content.childNodes.length > 1 ? Array.from(fakeParent.content.childNodes) : fakeParent.content.firstChild;
 }
 
 customElements.define("hold-pass", class extends HTMLElement {

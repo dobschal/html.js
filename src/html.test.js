@@ -220,3 +220,63 @@ test("Applying an attribute with value should work", () => {
     isShown.value = false;
     expect(element.classList.contains("show")).toBe(false);
 });
+
+test("input binding a nested property should work", () => {});
+
+test("user should be able to set the state of a input checkbox element", () => {});
+
+test("empty observable element in inner HTML should work", () => {
+    const value = Observable(undefined);
+    const element = html`
+        <div>${value}</div>
+    `;
+    expect(element.textContent).toBe("");
+    value.value = "Hello World";
+    expect(element.textContent).toBe("Hello World");
+});
+
+test("empty nested observable in inner HTML should work", () => {
+    const value = Observable({ text: undefined });
+    const element = html`
+        <div>${() => value.value.text}</div>
+    `;
+    expect(element.textContent).toBe("");
+    value.value.text = "Hello World";
+    expect(element.textContent).toBe("Hello World");
+});
+
+test("empty nested plain object in inner HTML should work", () => {
+    const value = { text: "" };
+    const someClass = Observable("yeah");
+    const element = html`
+        <div class="${someClass}">${value.text}</div>
+    `;
+    expect(element.textContent).toBe("");
+    value.text = "Hello World";
+    expect(element.textContent).toBe("");
+    someClass.value = "nope";
+    expect(element.textContent).toBe("");
+    expect(element.classList.contains("nope")).toBe(true);
+});
+
+test("style binding should work", () => {
+
+    const entry = {
+        category: {
+            color: "blue"
+        }
+    };
+
+    const style = Computed(() => {
+        if (!entry.category?.color) return "dsfsd";
+        return "background-color: red";
+    });
+
+    const element = html`
+        <tr style="${style}">
+            <td>Hello WOrld</td>
+        </tr>
+    `;
+
+    expect(element.style.backgroundColor).toBe("red");
+});
