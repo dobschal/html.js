@@ -23,12 +23,12 @@ function isInsideTag(str) {
         if (quote) {
             if (ch === quote) quote = null;
         } else if (inTag) {
-            if (ch === '"' || ch === "'") {
+            if (ch === "\"" || ch === "'") {
                 quote = ch;
-            } else if (ch === '>') {
+            } else if (ch === ">") {
                 inTag = false;
             }
-        } else if (ch === '<') {
+        } else if (ch === "<") {
             inTag = true;
         }
     }

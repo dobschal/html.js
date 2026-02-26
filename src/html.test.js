@@ -327,7 +327,7 @@ test("XSS: array of strings uses text nodes", () => {
 
 test("Attribute value containing = should not be truncated", () => {
     const element = html`
-        <div ${'data-url="https://example.com?a=1&b=2"'}></div>
+        <div ${"data-url=\"https://example.com?a=1&b=2\""}></div>
     `;
     expect(element.getAttribute("data-url")).toBe("https://example.com?a=1&b=2");
 });
