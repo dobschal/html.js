@@ -52,7 +52,7 @@ const element = html`
             <button onclick="${() => (elementShown.value = !elementShown.value)}">
                 Toggle
             </button>
-            ${() => elementShown.value ? `<span>This is a hidden element.</span>` : ""}
+            ${() => elementShown.value ? html`<span>This is a hidden element.</span>` : ""}
         </p>
 
         <h2>Render list of HTML elements dynamically based on observable array</h2>

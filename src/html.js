@@ -8,6 +8,33 @@ function convertStringToDomNodes(htmlString) {
     return Array.from(fakeParent.content.childNodes);
 }
 
+function resolveReactive(arg, callback) {
+    if (arg?.isObservable) return arg.subscribe(callback);
+    if (typeof arg === "function") return Computed(arg).subscribe(callback);
+    callback(arg);
+    return null;
+}
+
+function isInsideTag(str) {
+    let inTag = false;
+    let quote = null;
+    for (let j = 0; j < str.length; j++) {
+        const ch = str[j];
+        if (quote) {
+            if (ch === quote) quote = null;
+        } else if (inTag) {
+            if (ch === '"' || ch === "'") {
+                quote = ch;
+            } else if (ch === '>') {
+                inTag = false;
+            }
+        } else if (ch === '<') {
+            inTag = true;
+        }
+    }
+    return inTag;
+}
+
 function isArrayOfSupportedValues(value) {
     return Array.isArray(value)
         && value.every((item) => ["string", "number", "boolean"].includes(typeof item) || item instanceof HTMLElement || item instanceof Node);
@@ -28,7 +55,7 @@ function replaceStringOrHTMLElement(placeholderNode, value) {
             if (item instanceof HTMLElement || item instanceof Node) {
                 domNodes.push(item);
             } else {
-                domNodes.push(...convertStringToDomNodes(item));
+                domNodes.push(document.createTextNode(String(item)));
             }
         }
         placeholderNode.replaceWith(...domNodes);
@@ -37,39 +64,23 @@ function replaceStringOrHTMLElement(placeholderNode, value) {
         placeholderNode.replaceWith(value);
         return [value];
     } else if (["string", "number", "boolean"].includes(typeof value)) {
-        const domNodes = convertStringToDomNodes(value);
-        placeholderNode.replaceWith(...domNodes);
-        return domNodes;
+        const textNode = document.createTextNode(String(value));
+        placeholderNode.replaceWith(textNode);
+        return [textNode];
     } else {
         throw new Error("Unsupported type for template placeholder: " + value);
     }
 }
 
 function replacePlaceholderNode(placeholderNode, arg) {
-    if (arg?.isObservable) {
-        let elements = [placeholderNode];
-        arg.subscribe((value) => {
-            for (let i = 1; i < elements.length; i++) {
-                const element = elements[i];
-                element.remove();
-            }
-            elements = replaceStringOrHTMLElement(elements[0], value);
-        });
-        return;
-    }
-    if (typeof arg === "function") {
-        const computed = Computed(arg);
-        let elements = [placeholderNode];
-        computed.subscribe((value) => {
-            for (let i = 1; i < elements.length; i++) {
-                const element = elements[i];
-                element.remove();
-            }
-            elements = replaceStringOrHTMLElement(elements[0], value);
-        });
-        return;
-    }
-    replaceStringOrHTMLElement(placeholderNode, arg);
+    let elements = [placeholderNode];
+    return resolveReactive(arg, (value) => {
+        for (let i = 1; i < elements.length; i++) {
+            const element = elements[i];
+            element.remove();
+        }
+        elements = replaceStringOrHTMLElement(elements[0], value);
+    });
 }
 
 function makePlaceholderId(i, instanceId) {
@@ -108,27 +119,12 @@ function findNodeByAttributeKey(fakeParent, attributeKey) {
 }
 
 function handleClassList(node, arg, placeholder) {
-    if (arg?.isObservable) {
-        let currentClass = placeholder;
-        arg.subscribe((value) => {
-            if (currentClass) node.classList.remove(currentClass);
-            if (value) node.classList.add(value);
-            currentClass = value;
-        });
-        return;
-    }
-    if (typeof arg === "function") {
-        const computed = Computed(arg);
-        let currentClass = placeholder;
-        computed.subscribe((value) => {
-            if (currentClass) node.classList.remove(currentClass);
-            if (value) node.classList.add(value);
-            currentClass = value;
-        });
-        return;
-    }
-    if(arg) node.classList.add(arg);
-    node.classList.remove(placeholder);
+    let currentClass = placeholder;
+    return resolveReactive(arg, (value) => {
+        if (currentClass) node.classList.remove(currentClass);
+        if (value) node.classList.add(value);
+        currentClass = value;
+    });
 }
 
 // this handles the case that the whole attribute including key and value is
@@ -137,8 +133,16 @@ function handleClassList(node, arg, placeholder) {
 function handleDynamicAttribute(node, arg, placeholder) {
 
     function update(val) {
-        let [key, value] = val.split("=", 2);
-        value = (value ?? "''").slice(1, -1);
+        const eqIndex = val.indexOf("=");
+        let key, value;
+        if (eqIndex === -1) {
+            key = val;
+            value = "";
+        } else {
+            key = val.slice(0, eqIndex);
+            value = val.slice(eqIndex + 1);
+            value = value.slice(1, -1);
+        }
         const lastKey = node.getAttribute(placeholder);
         if (lastKey && node.hasAttribute(lastKey)) {
             node.removeAttribute(lastKey);
@@ -149,18 +153,7 @@ function handleDynamicAttribute(node, arg, placeholder) {
         }
     }
 
-    if (arg?.isObservable) {
-        arg.subscribe((value) => update(value));
-        return;
-    }
-
-    if (typeof arg === "function") {
-        const computed = Computed(arg);
-        computed.subscribe((value) => update(value));
-        return;
-    }
-
-    update(arg);
+    return resolveReactive(arg, (value) => update(value));
 }
 
 function handleIfAttribute(node, attributeKey, arg) {
@@ -198,44 +191,25 @@ function handleIfAttribute(node, attributeKey, arg) {
         }
     }
 
-    if (arg?.isObservable) {
-        arg.subscribe((value) => update(value));
-        return;
-    }
-
-    if (typeof arg === "function") {
-        const computed = Computed(arg);
-        computed.subscribe((value) => update(value));
-        return;
-    }
-
-    update(arg);
+    return resolveReactive(arg, (value) => update(value));
 }
 
 function replaceAttributePlaceholder(node, attributeKey, arg, placeholder) {
 
     // If no attribute key is given, the whole attribute will be replaced
     if(!attributeKey) {
-        handleDynamicAttribute(node, arg, placeholder);
-        return;
+        return handleDynamicAttribute(node, arg, placeholder);
     }
 
-    if (attributeKey === "if") {
-        handleIfAttribute(node, attributeKey, arg);
-        return;
-    }
-
-    if (attributeKey === "if-not") {
-        handleIfAttribute(node, attributeKey, arg);
-        return;
+    if (attributeKey === "if" || attributeKey === "if-not") {
+        return handleIfAttribute(node, attributeKey, arg);
     }
 
     if (attributeKey === "class") {
         if (!node.classList.contains(placeholder)) {
             throw new Error("Fatal: Could not find placeholder in class attribute: " + placeholder);
         }
-        handleClassList(node, arg, placeholder);
-        return;
+        return handleClassList(node, arg, placeholder);
     }
 
     if (attributeKey.startsWith("on")) {
@@ -244,7 +218,7 @@ function replaceAttributePlaceholder(node, attributeKey, arg, placeholder) {
         }
         node.addEventListener(attributeKey.slice(2), arg);
         node.removeAttribute(attributeKey);
-        return;
+        return null;
     }
     const [before, after] = node.getAttribute(attributeKey).split(placeholder);
 
@@ -252,23 +226,24 @@ function replaceAttributePlaceholder(node, attributeKey, arg, placeholder) {
         if (attributeKey === "value") {
             node.addEventListener("input", (event) => arg.value = event.target.value);
         }
-        arg.subscribe((value) => {
+        const unsub = arg.subscribe((value) => {
             setNodeAttribute(node, attributeKey, before + value + after);
             placeholder = value;
         });
-        return;
+        return unsub;
     }
 
     if (typeof arg === "function") {
         const computed = Computed(arg);
-        computed.subscribe((value) => {
+        const unsub = computed.subscribe((value) => {
             setNodeAttribute(node, attributeKey, before + value + after);
             placeholder = value;
         });
-        return;
+        return unsub;
     }
 
     setNodeAttribute(node, attributeKey, before + arg + after);
+    return null;
 }
 
 function setNodeAttribute(node, attributeKey, value) {
@@ -284,6 +259,7 @@ function html(templateParts, ...args) {
 
     const instanceId = id++;
     const htmlPlaceholderIndices = new Set();
+    const unsubscribes = [];
 
     const htmlWithPlaceholders = templateParts.reduce((acc, part, i) => {
         if (i === 0) {
@@ -298,9 +274,7 @@ function html(templateParts, ...args) {
             }
             args[i] = "";
         }
-        const amountCloseTags = ((acc + part).match(/>/g) || []).length;
-        const amountOpenTags = ((acc + part).match(/</g) || []).length;
-        const isAttribute = amountCloseTags !== amountOpenTags;
+        const isAttribute = isInsideTag(acc + part);
         if (isAttribute) {
             return acc + part + makePlaceholderId(i, instanceId);
         }
@@ -317,7 +291,8 @@ function html(templateParts, ...args) {
             if (!placeholderNode) {
                 throw new Error("Fatal: Could not find placeholder for argument: " + i);
             }
-            replacePlaceholderNode(placeholderNode, arg);
+            const unsub = replacePlaceholderNode(placeholderNode, arg);
+            if (unsub) unsubscribes.push(unsub);
         } else {
             let [node, attributeKey] = findNodeByAttributeValue(fakeParent.content, makePlaceholderId(i, instanceId));
 
@@ -331,14 +306,33 @@ function html(templateParts, ...args) {
             }
 
             if (node.tagName === "HOLD-PASS") {
-                setTimeout(() => replaceAttributePlaceholder(node, attributeKey, arg, makePlaceholderId(i, instanceId)));
+                setTimeout(() => {
+                    const unsub = replaceAttributePlaceholder(node, attributeKey, arg, makePlaceholderId(i, instanceId));
+                    if (unsub) unsubscribes.push(unsub);
+                });
             }  else {
-                replaceAttributePlaceholder(node, attributeKey, arg, makePlaceholderId(i, instanceId));
+                const unsub = replaceAttributePlaceholder(node, attributeKey, arg, makePlaceholderId(i, instanceId));
+                if (unsub) unsubscribes.push(unsub);
             }
         }
     });
 
-    return fakeParent.content.childNodes.length > 1 ? Array.from(fakeParent.content.childNodes) : fakeParent.content.firstChild;
+    const result = fakeParent.content.childNodes.length > 1 ? Array.from(fakeParent.content.childNodes) : fakeParent.content.firstChild;
+
+    function dispose() {
+        for (const unsub of unsubscribes) {
+            if (typeof unsub === "function") unsub();
+        }
+        unsubscribes.length = 0;
+    }
+
+    if (Array.isArray(result)) {
+        result.dispose = dispose;
+    } else if (result) {
+        result.dispose = dispose;
+    }
+
+    return result;
 }
 
 customElements.define("hold-pass", class extends HTMLElement {
